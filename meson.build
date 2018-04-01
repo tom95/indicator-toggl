@@ -47,14 +47,14 @@ install_data([
   join_paths('data', 'icons', 'symbolic', 'com.github.tom95.indicator-toggl.time-tracker-active-symbolic.svg')
 ], install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', 'symbolic', 'apps'))
 
-install_data([
-  join_paths('data', 'icons', 'com.github.tom95.indicator-toggl.svg')
-], install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', '128x128', 'apps'))
+install_data(join_paths('data', 'icons', 'com.github.tom95.indicator-toggl.svg'),
+    install_dir: join_paths(get_option('datadir'), 'icons', 'hicolor', '128x128', 'apps'))
 
-install_data([
-  join_paths('data', 'com.github.tom95.indicator-toggl.desktop')
-], install_dir: join_paths(get_option('datadir'), 'applications'))
+install_data(join_paths('data', 'com.github.tom95.indicator-toggl.desktop'),
+    install_dir: join_paths(get_option('datadir'), 'applications'))
 
-install_data([
-  join_paths('data', 'com.github.tom95.indicator-toggl')
-], install_dir: get_option('bindir'))
+install_data(join_paths('data', 'com.github.tom95.indicator-toggl'),
+    install_dir: get_option('bindir'))
+
+install_data(join_paths('data', 'com.github.tom95.indicator-toggl.appdata.xml'),
+    install_dir: join_paths(get_option('datadir'), 'metainfo'))

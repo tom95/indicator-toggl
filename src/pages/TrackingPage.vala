@@ -67,8 +67,6 @@ public class TrackingPage : Gtk.Grid
 	    } else {
 		start_tracking ();
 	    }
-
-	    set_tracking (!tracking);
 	});
 
 	attach (description, 0, 0, 2, 1);
@@ -84,17 +82,26 @@ public class TrackingPage : Gtk.Grid
 	most_recent_entries = new Gtk.Grid ();
 	most_recent_entries.row_spacing = 6;
 	most_recent_entries.orientation = Gtk.Orientation.VERTICAL;
-	attach (most_recent_entries, 0, 4, 2, 1);
+
+	var scroll = new Wingpanel.Widgets.AutomaticScrollBox ();
+	scroll.max_height = 200;
+	scroll.add (most_recent_entries);
+
+	attach (scroll, 0, 4, 2, 1);
     }
 
     public void start_tracking ()
     {
 	var api = TogglApi.get_default ();
+	var project = get_current_project ();
+	var workspace = project != null ? project.workspace_id : user.default_workspace_id;
+
 	api.start_time_entry.begin (description.text,
 				    {},
-				    get_current_project ().workspace_id,
+				    workspace,
 				    int64.parse (projects.active_id), (obj, res) => {
 					TogglApi.TimeEntry entry = api.start_time_entry.end (res);
+					set_tracking (true);
 					set_current_time_entry (entry);
 				    });
     }
@@ -103,6 +110,8 @@ public class TrackingPage : Gtk.Grid
     {
 	description.text = "";
 	TogglApi.get_default ().stop_time_entry.begin (current_time_entry);
+	prepend_most_recent_entry (current_time_entry);
+	set_tracking (false);
     }
 
     void set_tracking (bool _tracking) {
@@ -118,9 +127,29 @@ public class TrackingPage : Gtk.Grid
     {
 	projects.remove_all ();
 	projects.append ("0", _("- No Project -"));
+	projects.active_id = "0";
 
 	foreach (var project in _projects)
 	    projects.append (project.id.to_string (), project.name);
+    }
+
+    void prepend_most_recent_entry (TogglApi.TimeEntry entry)
+    {
+	var label = new Gtk.Label ("%s (%s)".printf (entry.description, format_duration (entry.duration, true)));
+	label.use_markup = true;
+	label.hexpand = true;
+	label.xalign = 0.0f;
+	label.ellipsize = Pango.EllipsizeMode.END;
+
+	var resume = new Gtk.Button.from_icon_name ("media-playback-start-symbolic", Gtk.IconSize.MENU);
+	resume.clicked.connect (() => {
+	    resume_time_entry.begin (entry);
+	});
+
+	most_recent_entries.insert_row (0);
+	most_recent_entries.attach (label, 0, 0, 1, 1);
+	most_recent_entries.attach (resume, 1, 0, 1, 1);
+	most_recent_entries.show_all ();
     }
 
     void set_most_recent_entries (TogglApi.TimeEntry[] entries)
@@ -128,27 +157,12 @@ public class TrackingPage : Gtk.Grid
 	foreach (var child in most_recent_entries.get_children ())
 	    child.destroy ();
 
-	var row = 0;
-	for (var i = entries.length - 1; i >= 0; i--) {
-	    var entry = entries[i];
+	foreach (var entry in entries) {
 	    // check if this is the current entry
 	    if (entry.duration < 0)
 		continue;
 
-	    var label = new Gtk.Label ("%s (%s)".printf (entry.description, format_duration (entry.duration, true)));
-	    label.use_markup = true;
-	    label.hexpand = true;
-	    label.xalign = 0.0f;
-	    label.ellipsize = Pango.EllipsizeMode.END;
-
-	    var resume = new Gtk.Button.from_icon_name ("media-playback-start-symbolic", Gtk.IconSize.MENU);
-	    resume.clicked.connect (() => {
-		resume_time_entry.begin (entry);
-	    });
-
-	    most_recent_entries.attach (label, 0, row, 1, 1);
-	    most_recent_entries.attach (resume, 1, row, 1, 1);
-	    row++;
+	    prepend_most_recent_entry (entry);
 	}
 
 	most_recent_entries.show_all ();
