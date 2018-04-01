@@ -19,6 +19,9 @@ public class TogglMenu : Gtk.Stack
 	tracking_page.authorization_required.connect (message => {
 	    show_no_token_page (message);
 	});
+	tracking_page.request_refresh.connect (() => {
+	    try_show_tracking_page ();
+	});
 
 	no_token_page = new NoTokenPage ();
 	no_token_page.finished.connect (() => {

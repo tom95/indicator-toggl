@@ -3,12 +3,14 @@ public class TrackingPage : Gtk.Grid
 {
     public signal void authorization_required (string? message);
     public signal void tracking_changed (bool tracking);
+    public signal void request_refresh ();
 
     Gtk.Revealer duration_revealer;
     Gtk.Label duration;
     Gtk.Entry description;
     Gtk.Button toggle_button;
     Gtk.ComboBoxText projects;
+    Gtk.ComboBoxText workspaces;
     Gtk.Grid most_recent_entries;
 
     TogglApi.TimeEntry? current_time_entry = null;
@@ -33,7 +35,7 @@ public class TrackingPage : Gtk.Grid
 
     construct
     {
-	row_spacing = 12;
+	row_spacing = 6;
 	margin = 12;
 	orientation = Gtk.Orientation.VERTICAL;
 
@@ -43,6 +45,7 @@ public class TrackingPage : Gtk.Grid
 	description.hexpand = true;
 
 	projects = new Gtk.ComboBoxText ();
+	projects.popup_fixed_width = false;
 
 	toggle_button = new Gtk.Button.from_icon_name ("media-playback-start", Gtk.IconSize.DIALOG);
 	toggle_button.relief = Gtk.ReliefStyle.NONE;
@@ -81,6 +84,7 @@ public class TrackingPage : Gtk.Grid
 
 	most_recent_entries = new Gtk.Grid ();
 	most_recent_entries.row_spacing = 6;
+	most_recent_entries.column_spacing = 6;
 	most_recent_entries.orientation = Gtk.Orientation.VERTICAL;
 
 	var scroll = new Wingpanel.Widgets.AutomaticScrollBox ();
@@ -88,6 +92,33 @@ public class TrackingPage : Gtk.Grid
 	scroll.add (most_recent_entries);
 
 	attach (scroll, 0, 4, 2, 1);
+
+	var bottom_bar = new Gtk.Grid ();
+	bottom_bar.column_spacing = 12;
+	bottom_bar.orientation = Gtk.Orientation.HORIZONTAL;
+
+	workspaces = new Gtk.ComboBoxText ();
+	workspaces.changed.connect (() => {
+	    switch_to_workspace (int64.parse (workspaces.active_id));
+	});
+
+	var refresh = new Gtk.Button.from_icon_name ("view-refresh-symbolic");
+	refresh.hexpand = true;
+	refresh.halign = Gtk.Align.END;
+	refresh.tooltip_text = _("Refresh data from Toggl");
+	refresh.clicked.connect (() => request_refresh ());
+
+	bottom_bar.add (workspaces);
+	bottom_bar.add (refresh);
+
+	attach (new Wingpanel.Widgets.Separator (), 0, 5, 2, 1);
+	attach (bottom_bar, 0, 6, 2, 1);
+    }
+
+    void switch_to_workspace (int64 workspace_id)
+    {
+	set_projects (user.projects, workspace_id);
+	workspaces.active_id = workspace_id.to_string ();
     }
 
     public void start_tracking ()
@@ -109,7 +140,8 @@ public class TrackingPage : Gtk.Grid
     public void stop_tracking ()
     {
 	description.text = "";
-	TogglApi.get_default ().stop_time_entry.begin (current_time_entry);
+	if (current_time_entry != null)
+	    TogglApi.get_default ().stop_time_entry.begin (current_time_entry);
 	prepend_most_recent_entry (current_time_entry);
 	set_tracking (false);
     }
@@ -123,14 +155,28 @@ public class TrackingPage : Gtk.Grid
 	tracking_changed (tracking);
     }
 
-    void set_projects (TogglApi.Project[] _projects)
+    void set_projects (TogglApi.Project[] _projects, int64 filter_by_workspace = 0)
     {
 	projects.remove_all ();
 	projects.append ("0", _("- No Project -"));
 	projects.active_id = "0";
 
-	foreach (var project in _projects)
-	    projects.append (project.id.to_string (), project.name);
+	foreach (var project in _projects) {
+	    if (filter_by_workspace == 0 || filter_by_workspace == project.workspace_id) {
+		projects.append (project.id.to_string (), project.name);
+	    }
+	}
+    }
+
+    void set_workspaces (TogglApi.Workspace[] _workspaces, int64 default_workspace_id)
+    {
+	workspaces.remove_all ();
+
+	foreach (var workspace in _workspaces)
+	    workspaces.append (workspace.id.to_string (), workspace.name);
+
+	workspaces.active_id = default_workspace_id.to_string ();
+	workspaces.visible = _workspaces.length > 1;
     }
 
     void prepend_most_recent_entry (TogglApi.TimeEntry entry)
@@ -142,6 +188,8 @@ public class TrackingPage : Gtk.Grid
 	label.ellipsize = Pango.EllipsizeMode.END;
 
 	var resume = new Gtk.Button.from_icon_name ("media-playback-start-symbolic", Gtk.IconSize.MENU);
+	resume.relief = Gtk.ReliefStyle.NONE;
+	resume.tooltip_text = _("Resume tracking for this entry");
 	resume.clicked.connect (() => {
 	    resume_time_entry.begin (entry);
 	});
@@ -197,12 +245,15 @@ public class TrackingPage : Gtk.Grid
 
 	try {
 	    user = yield TogglApi.get_default ().me ();
-	    set_projects (user.projects);
+	    set_projects (user.projects, user.default_workspace_id);
+	    set_workspaces (user.workspaces, user.default_workspace_id);
 	    set_most_recent_entries (user.time_entries);
 
 	    var entry = yield TogglApi.get_default ().current_time_entry ();
 	    if (entry != null)
 		set_current_time_entry (entry);
+	    else
+		set_tracking (false);
 	} catch (TogglError.AUTHORIZATION_FAILED error) {
 	    authorization_required (_("The token appears to be wrong."));
 	    return false;
@@ -246,6 +297,8 @@ public class TrackingPage : Gtk.Grid
 							entry.tags,
 							entry.workspace_id,
 							entry.project_id);
+	projects.active_id = entry.project_id.to_string ();
+	switch_to_workspace (entry.workspace_id);
 	set_current_time_entry (new_entry);
     }
 }
