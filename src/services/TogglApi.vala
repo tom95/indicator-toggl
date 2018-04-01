@@ -50,7 +50,7 @@ TogglApi.TimeEntry[] json_array_to_time_entry_array (Json.Array source) {
     return dest;
 }
 
-errordomain TogglError {
+public errordomain TogglError {
     AUTHORIZATION_FAILED
 }
 
@@ -227,18 +227,18 @@ public class TogglApi {
 
     const string API_PREFIX = "https://www.toggl.com/api/v8";
 
-    public async User? me ()
+    public async User? me () throws TogglError
     {
 	var obj = yield authenticated_request ("GET", "/me?with_related_data=true");
 	return obj != null ? new User.from_json (obj) : null;
     }
 
-    public async TimeEntry? current_time_entry ()
+    public async TimeEntry? current_time_entry () throws TogglError
     {
 	return yield authenticated_request_for_time_entry ("GET", "/time_entries/current");
     }
 
-    public async TimeEntry? start_time_entry (string description, string[] tags, int64 workspace_id, int64 project_id)
+    public async TimeEntry? start_time_entry (string description, string[] tags, int64 workspace_id, int64 project_id) throws TogglError
     {
 	var time_entry = new TimeEntry (description, new DateTime.now_local (), workspace_id);
 	time_entry.tags = tags;
@@ -247,18 +247,18 @@ public class TogglApi {
 	return yield authenticated_request_for_time_entry ("POST", "/time_entries/start", time_entry.to_json_string ());
     }
 
-    public async TimeEntry? stop_time_entry (TimeEntry stop)
+    public async TimeEntry? stop_time_entry (TimeEntry stop) throws TogglError
     {
 	return yield authenticated_request_for_time_entry ("PUT", "/time_entries/" + stop.id.to_string () + "/stop");
     }
 
-    private async TimeEntry? authenticated_request_for_time_entry (string method, string url, string? body = null)
+    private async TimeEntry? authenticated_request_for_time_entry (string method, string url, string? body = null) throws TogglError
     {
 	var obj = yield authenticated_request (method, url, body);
 	return obj != null ? new TimeEntry.from_json (obj) : null;
     }
 
-    private async Json.Object? authenticated_request (string method, string url, string? body = null)
+    private async Json.Object? authenticated_request (string method, string url, string? body = null) throws TogglError
     {
 	var session = new Soup.Session ();
 
@@ -270,8 +270,15 @@ public class TogglApi {
 	    message.request_body.append_take (body.data);
 
 	Json.Node? root = null;
+	var auth_failed = false;
 
 	session.queue_message (message, (session, res) => {
+	    if (res.status_code == 403) {
+		auth_failed = true;
+		authenticated_request.callback ();
+		return;
+	    }
+
 	    var parser = new Json.Parser ();
 	    try {
 		if (res.response_body.data != null) {
@@ -286,6 +293,10 @@ public class TogglApi {
 	});
 
 	yield;
+
+	if (auth_failed) {
+	    throw new TogglError.AUTHORIZATION_FAILED ("Authorization failed");
+	}
 
 	if (root != null)
 	    return root.get_object ().get_object_member ("data");

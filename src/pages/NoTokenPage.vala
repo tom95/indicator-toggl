@@ -6,6 +6,7 @@ public class NoTokenPage : Gtk.Grid
     const string PROFILE_LINK = "https://toggl.com/app/profile";
 
     Gtk.Entry token_entry;
+    Gtk.Label message_label;
 
     construct
     {
@@ -30,22 +31,27 @@ public class NoTokenPage : Gtk.Grid
 	label.wrap = true;
 	label.max_width_chars = 40;
 
+	message_label = new Gtk.Label ("");
+	message_label.wrap = true;
+	message_label.no_show_all = true;
+	label.max_width_chars = 40;
+
 	add (new Gtk.Image.from_icon_name ("appointment-symbolic", Gtk.IconSize.DIALOG));
 	add (label);
 	add (link_button);
 	add (token_entry);
+	add (message_label);
     }
 
     void confirm_token ()
     {
 	TogglSettings.get_default ().toggl_api_token = token_entry.text;
-
-	var api = TogglApi.get_default ();
-	api.current_time_entry.begin ((obj, res) => {
-	    TogglApi.TimeEntry? entry = api.current_time_entry.end (res);
-	    print ("%s\n", entry.description);
-	});
-
 	finished (token_entry.text);
+    }
+
+    public void set_message (string? message)
+    {
+	message_label.visible = message != null;
+	message_label.label = message;
     }
 }

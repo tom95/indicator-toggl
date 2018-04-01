@@ -1,7 +1,7 @@
 
 public class TrackingPage : Gtk.Grid
 {
-    public signal void authorization_required ();
+    public signal void authorization_required (string? message);
     public signal void tracking_changed (bool tracking);
 
     Gtk.Revealer duration_revealer;
@@ -94,7 +94,7 @@ public class TrackingPage : Gtk.Grid
 				    {},
 				    get_current_project ().workspace_id,
 				    int64.parse (projects.active_id), (obj, res) => {
-					TogglApi.TimeEntry entry = api.end (res);
+					TogglApi.TimeEntry entry = api.start_time_entry.end (res);
 					set_current_time_entry (entry);
 				    });
     }
@@ -176,8 +176,8 @@ public class TrackingPage : Gtk.Grid
 
     public async bool populate ()
     {
-	if (TogglSettings.get_default ().toggl_api_token == null) {
-	    authorization_required ();
+	if (TogglSettings.get_default ().toggl_api_token == "") {
+	    authorization_required (null);
 	    return false;
 	}
 
@@ -190,7 +190,7 @@ public class TrackingPage : Gtk.Grid
 	    if (entry != null)
 		set_current_time_entry (entry);
 	} catch (TogglError.AUTHORIZATION_FAILED error) {
-	    authorization_required ();
+	    authorization_required (_("The token appears to be wrong."));
 	    return false;
 	}
 

@@ -24,13 +24,15 @@ public class TogglIndicator : Wingpanel.Indicator
     private TogglMenu? popover_widget = null;
 
     const string CODE_NAME = "com.github.tom95.indicator-toggl";
+    const string ICON = "com.github.tom95.indicator-toggl.time-tracker-symbolic";
+    const string ICON_ACTIVE = "com.github.tom95.indicator-toggl.time-tracker-active-symbolic";
 
     public TogglIndicator (Wingpanel.IndicatorManager.ServerType server_type) {
 	Object (code_name: CODE_NAME,
 		display_name: _("Toggl"),
 		description: _("Toggl Indicator"));
 
-	indicator_icon = new Wingpanel.Widgets.OverlayIcon ("appointment-symbolic");
+	indicator_icon = new Wingpanel.Widgets.OverlayIcon (ICON);
 	indicator_icon.button_press_event.connect (e => {
 	    if (e.button == Gdk.BUTTON_MIDDLE && popover_widget != null) {
 		popover_widget.maybe_stop_tracking ();
@@ -48,9 +50,7 @@ public class TogglIndicator : Wingpanel.Indicator
 	if (popover_widget == null) {
 	    popover_widget = new TogglMenu ();
 	    popover_widget.tracking_changed.connect ((tracking) => {
-		indicator_icon.set_main_icon_name (tracking
-						   ? "appointment-missed-symbolic"
-						   : "appointment-symbolic");
+		indicator_icon.set_main_icon_name (tracking ? ICON_ACTIVE : ICON);
 	    });
 	}
 
