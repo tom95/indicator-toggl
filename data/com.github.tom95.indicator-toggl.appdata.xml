@@ -21,4 +21,9 @@
     <p>To add a shortcut, go to your keyboard settings and add a custom shortcut with the following command:</p>
     <p>wingpanel --toggle-indicator=com.github.tom95.indicator-toggl</p>
   </description>
+  <custom>
+    <value key="x-appcenter-color-primary">#d40000</value>
+    <value key="x-appcenter-color-primary-text">#ffffff</value>
+    <value key="x-appcenter-suggested-price">2</value>
+  </custom>
 </component>
