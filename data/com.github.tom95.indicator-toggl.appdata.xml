@@ -21,6 +21,20 @@
     <p>To add a shortcut, go to your keyboard settings and add a custom shortcut with the following command:</p>
     <p>wingpanel --toggle-indicator=com.github.tom95.indicator-toggl</p>
   </description>
+  <provides>
+    <binary>com.github.tom95.indicator-toggl</binary>
+  </provides>
+  <releases>
+    <release version="0.1.0" date="2018-04-001">
+      <description>
+        <p>First Beta build</p>
+        <ul>
+          <li>Basic functionality working</li>
+          <li>Acts only as a shortcut for the most common task as of now, web interface still needed for all advanced actions</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
   <custom>
     <value key="x-appcenter-color-primary">#d40000</value>
     <value key="x-appcenter-color-primary-text">#ffffff</value>
