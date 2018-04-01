@@ -1,0 +1,9 @@
+<schemalist>
+	<schema path="/com/github/tom95/indicator-toggl/" id="com.github.tom95.indicator-toggl" gettext-domain="com.github.tom95.indicator-toggl">
+		<key name="toggl-api-token" type="s">
+			<default>""</default>
+			<summary>Your toggl API token.</summary>
+			<description>The token found on your toggl profile page used to authenticate requests to the toggl API.</description>
+		</key>
+	</schema>
+</schemalist>

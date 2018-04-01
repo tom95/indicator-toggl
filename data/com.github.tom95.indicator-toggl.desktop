@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Toggl Indicator
+Comment=Start or stop tracking time
+GenericName=Time Tracking Utility
+Exec=com.github.tom95.indicator-toggl %U
+Icon=com.github.tom95.indicator-toggl
+Terminal=false
+Categories=GNOME;GTK;Utility;

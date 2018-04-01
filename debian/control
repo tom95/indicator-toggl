@@ -1,0 +1,19 @@
+Source: com.github.tom95.indicator-toggl
+Section: x11
+Priority: optional
+Maintainer: Tom Beckmann <tomjonabc@gmail.com>
+Build-Depends: debhelper (>= 10.2.2),
+               gettext,
+               cmake (>= 2.8),
+               valac (>= 0.36.12),
+               libwingpanel-2.0-dev,
+               libgtk-3-dev (>= 3.0.0),
+               libjson-glib-dev (>= 0.10.0),
+               libsoup2.4-dev (>= 2.52.2)
+
+Standards-Version: 3.9.7
+Package: com.github.tom95.indicator-toggl
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+Description: toggl indicator
+ An indicator connecting to your Toggl account. Displays the time tracking status and allows starting to track.
